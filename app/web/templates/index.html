@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chrona — Calendar Scheduling Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">Chrona</p>
+        <p class="brand-tag">LLM calendar agent</p>
+      </div>
+    </div>
+    <nav class="nav-tabs" role="tablist" aria-label="Main">
+      <button type="button" class="nav-tab active" data-tab="schedule" role="tab" aria-selected="true">Plan schedule</button>
+      <button type="button" class="nav-tab" data-tab="palette" role="tab" aria-selected="false">Color palettes</button>
+    </nav>
+    <div class="status-pill" id="authStatus">
+      {% if authenticated %}
+        Google Calendar connected
+      {% else %}
+        Google Calendar not connected
+      {% endif %}
+    </div>
+  </header>
+
+  <main id="tab-schedule" class="tab-panel active">
+    <div class="layout">
+      <section class="panel compose">
+        <h1>Plan today from a task list</h1>
+        <p class="lede">
+          Add tasks as chips. Chrona detects which calendar each belongs on and
+          where it fits around existing events.
+        </p>
+
+        <form id="planForm">
+          <label class="field">
+            <span>Target day</span>
+            <input type="date" id="targetDay" name="target_day" value="{{ today }}" required />
+          </label>
+
+          <div class="field">
+            <span>Tasks</span>
+            <div class="chip-box" id="chipBox">
+              <div class="chips" id="taskChips" aria-live="polite"></div>
+              <input
+                type="text"
+                id="taskInput"
+                class="chip-input"
+                placeholder="Type a task and press Enter"
+                autocomplete="off"
+              />
+            </div>
+            <p class="muted tiny">Press Enter to add. Remove with × — if it was scheduled, it is deleted from Google Calendar too.</p>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" id="writeToCalendar" checked />
+            <span>Write proposed events to Google Calendar</span>
+          </label>
+
+          <div class="actions">
+            <button type="button" class="btn ghost" id="connectGoogle">Connect Google</button>
+            <button type="submit" class="btn primary" id="planBtn">Plan schedule</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel results">
+        <div class="results-head">
+          <h2>Proposal</h2>
+          <p id="summaryText" class="muted">Run a plan to see suggested slots.</p>
+        </div>
+
+        <div id="proposals" class="proposals"></div>
+
+        <div class="feedback-bar" id="feedbackBar" hidden>
+          <button type="button" class="btn primary" id="submitFeedback">Save feedback</button>
+          <p class="muted tiny">Accept keeps events; reject deletes them; edit updates times and memory.</p>
+        </div>
+
+        <pre id="trace" class="trace" hidden></pre>
+      </section>
+    </div>
+  </main>
+
+  <main id="tab-palette" class="tab-panel" hidden>
+    <div class="layout">
+      <section class="panel compose">
+        <h1>Restyle your calendars</h1>
+        <p class="lede">
+          Apply a palette to whole calendars (Personal, Work, School, …)—not individual events.
+          Everything below is optional: leave fields blank to generate a random shaded aesthetic.
+        </p>
+
+        <form id="paletteForm">
+          <label class="field">
+            <span>Aesthetic description (optional)</span>
+            <input
+              type="text"
+              id="aesthetic"
+              name="aesthetic_description"
+              placeholder="e.g. moss green and soft clay — or leave blank for random shades"
+            />
+          </label>
+
+          <label class="field">
+            <span>Palette image (optional)</span>
+            <input type="file" id="image" name="image" accept="image/*" />
+          </label>
+
+          <label class="field">
+            <span>Style preferences (optional)</span>
+            <textarea
+              id="stylePrefs"
+              rows="4"
+              placeholder="Examples:&#10;- Keep text black on all calendars&#10;- Same colors on mobile Google Calendar&#10;- Soft muted tones for Work, brighter for Personal"
+            ></textarea>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="applyPalette" checked />
+            <span>Apply colors to Google calendars</span>
+          </label>
+
+          <div class="actions">
+            <button type="button" class="btn ghost" id="connectGooglePalette">Connect Google</button>
+            <button type="submit" class="btn primary" id="paletteBtn">Generate palette</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel results">
+        <div class="results-head">
+          <h2>Calendar colors</h2>
+          <p id="paletteSummary" class="muted">Generate a palette to preview calendar assignments.</p>
+        </div>
+
+        <div id="palettePreview" class="palette" hidden></div>
+        <div id="assignments" class="proposals"></div>
+        <pre id="paletteTrace" class="trace" hidden></pre>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

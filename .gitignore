@@ -1,0 +1,21 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Google OAuth secrets and tokens
+credentials/client_secret.json
+credentials/token.json
+credentials/*.json
+!credentials/.gitkeep
+
+# Uploads and local runtime data
+uploads/
+*.log
+.DS_Store

@@ -1,0 +1,171 @@
+{
+  "work_hours": {
+    "start": "09:00",
+    "end": "17:00"
+  },
+  "timezone": "America/New_York",
+  "time_of_day_biases": {
+    "deep_work": "morning",
+    "meetings": "afternoon",
+    "personal": "evening",
+    "health": "evening",
+    "work": "afternoon"
+  },
+  "break_habits": {
+    "prefer_breaks_between_tasks": true,
+    "min_break_minutes": 10
+  },
+  "categories": {
+    "work": {
+      "typical_duration_minutes": 60,
+      "preferred_color_id": "9"
+    },
+    "personal": {
+      "typical_duration_minutes": 30,
+      "preferred_color_id": "2"
+    },
+    "health": {
+      "typical_duration_minutes": 45,
+      "preferred_color_id": "7"
+    },
+    "errands": {
+      "typical_duration_minutes": 30,
+      "preferred_color_id": "6"
+    },
+    "other": {
+      "typical_duration_minutes": 30,
+      "preferred_color_id": "8"
+    }
+  },
+  "feedback_summary": {
+    "accepted_patterns": [
+      {
+        "task_title": "Gym",
+        "category": "health",
+        "time_of_day": "morning",
+        "action": "accept"
+      },
+      {
+        "task_title": "Gym",
+        "category": "health",
+        "time_of_day": "morning",
+        "action": "accept"
+      },
+      {
+        "task_title": "Gym",
+        "category": "health",
+        "time_of_day": "morning",
+        "action": "accept"
+      },
+      {
+        "task_title": "Sleep",
+        "category": "health",
+        "time_of_day": "evening",
+        "action": "accept"
+      },
+      {
+        "task_title": "TESTING",
+        "category": "work",
+        "time_of_day": "morning",
+        "action": "accept"
+      },
+      {
+        "task_title": "TESTING3",
+        "category": "work",
+        "time_of_day": "morning",
+        "action": "accept"
+      },
+      {
+        "task_title": "TESTING$",
+        "category": "work",
+        "time_of_day": "afternoon",
+        "action": "accept"
+      }
+    ],
+    "rejected_patterns": [],
+    "notes": [
+      "Palette prefs: - Keep text black on all calendars",
+      "Palette prefs: - Muted tones for google calendar so that all text on calendar",
+      "Palette prefs: Muted tones for google calendar so that all text on calendar"
+    ]
+  },
+  "feedback_log": [
+    {
+      "timestamp": "2026-07-22T23:16:26.192668+00:00",
+      "action": "accept",
+      "task_title": "Gym",
+      "category": "health",
+      "proposed_start": "2026-07-22T09:00:00-04:00",
+      "proposed_end": "2026-07-22T09:45:00-04:00",
+      "final_start": "2026-07-22T09:00:00-04:00",
+      "final_end": "2026-07-22T09:45:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-22T23:26:28.127504+00:00",
+      "action": "accept",
+      "task_title": "Gym",
+      "category": "health",
+      "proposed_start": "2026-07-22T09:00:00-04:00",
+      "proposed_end": "2026-07-22T09:45:00-04:00",
+      "final_start": "2026-07-22T09:00:00-04:00",
+      "final_end": "2026-07-22T09:45:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-22T23:38:08.390708+00:00",
+      "action": "accept",
+      "task_title": "Gym",
+      "category": "health",
+      "proposed_start": "2026-07-22T09:00:00-04:00",
+      "proposed_end": "2026-07-22T09:45:00-04:00",
+      "final_start": "2026-07-22T09:00:00-04:00",
+      "final_end": "2026-07-22T09:45:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-22T23:38:08.391175+00:00",
+      "action": "accept",
+      "task_title": "Sleep",
+      "category": "health",
+      "proposed_start": "2026-07-22T20:00:00-04:00",
+      "proposed_end": "2026-07-23T04:00:00-04:00",
+      "final_start": "2026-07-22T20:00:00-04:00",
+      "final_end": "2026-07-23T04:00:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-27T17:46:27.685947+00:00",
+      "action": "accept",
+      "task_title": "TESTING",
+      "category": "work",
+      "proposed_start": "2026-07-27T09:00:00-04:00",
+      "proposed_end": "2026-07-27T10:00:00-04:00",
+      "final_start": "2026-07-27T09:00:00-04:00",
+      "final_end": "2026-07-27T10:00:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-27T18:14:07.305984+00:00",
+      "action": "accept",
+      "task_title": "TESTING3",
+      "category": "work",
+      "proposed_start": "2026-07-27T11:00:00-04:00",
+      "proposed_end": "2026-07-27T12:00:00-04:00",
+      "final_start": "2026-07-27T11:00:00-04:00",
+      "final_end": "2026-07-27T12:00:00-04:00",
+      "reason": null
+    },
+    {
+      "timestamp": "2026-07-27T18:14:07.306732+00:00",
+      "action": "accept",
+      "task_title": "TESTING$",
+      "category": "work",
+      "proposed_start": "2026-07-27T14:35:00-04:00",
+      "proposed_end": "2026-07-27T15:35:00-04:00",
+      "final_start": "2026-07-27T14:35:00-04:00",
+      "final_end": "2026-07-27T15:35:00-04:00",
+      "reason": null
+    }
+  ]
+}
