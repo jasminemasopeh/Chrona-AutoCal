@@ -9,14 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from app.agent.loop import run_palette_agent, run_scheduling_agent
 from app.calendar_api import client as calendar_client
-from app.calendar_api.auth import get_credentials, is_authenticated
+from app.calendar_api.auth import authorization_url, exchange_code, is_authenticated
 from app.config import UPLOADS_DIR
 from app.memory import store as memory_store
 from app.palette.extract import extract_palette_from_image
@@ -72,16 +72,54 @@ async def health() -> dict[str, Any]:
     }
 
 
-@app.post("/api/auth/google")
-async def auth_google() -> dict[str, Any]:
-    """Trigger the local OAuth browser flow and save token.json."""
+@app.get("/api/auth/google")
+async def auth_google_start() -> RedirectResponse:
+    """Redirect the browser to Google's OAuth consent screen."""
     try:
-        get_credentials(open_browser=True)
+        url, state = authorization_url()
     except FileNotFoundError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return {"ok": True, "authenticated": is_authenticated()}
+
+    response = RedirectResponse(url)
+    response.set_cookie(
+        key="oauth_state",
+        value=state,
+        httponly=True,
+        max_age=600,
+        samesite="lax",
+    )
+    return response
+
+
+@app.get("/api/auth/google/callback")
+async def auth_google_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+) -> RedirectResponse:
+    """Handle Google's redirect, exchange the code, and return to the UI."""
+    if error:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+
+    expected_state = request.cookies.get("oauth_state")
+    if not expected_state or not state or state != expected_state:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+
+    try:
+        exchange_code(code)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie("oauth_state")
+    return response
 
 
 @app.get("/api/preferences")

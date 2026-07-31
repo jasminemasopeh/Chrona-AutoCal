@@ -48,18 +48,8 @@ function formatRange(start, end) {
   }
 }
 
-async function connectGoogle() {
-  try {
-    const res = await fetch("/api/auth/google", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Auth failed");
-    authStatus.textContent = data.authenticated
-      ? "Google Calendar connected"
-      : "Google Calendar not connected";
-    showToast("Google Calendar connected");
-  } catch (err) {
-    showToast(err.message || "Could not connect Google");
-  }
+function connectGoogle() {
+  window.location.href = "/api/auth/google";
 }
 
 document.querySelectorAll(".nav-tab").forEach((btn) => {
@@ -78,15 +68,13 @@ document.querySelectorAll(".nav-tab").forEach((btn) => {
   });
 });
 
-document.getElementById("connectGoogle").addEventListener("click", async (e) => {
+document.getElementById("connectGoogle").addEventListener("click", (e) => {
   e.currentTarget.disabled = true;
-  await connectGoogle();
-  e.currentTarget.disabled = false;
+  connectGoogle();
 });
-document.getElementById("connectGooglePalette").addEventListener("click", async (e) => {
+document.getElementById("connectGooglePalette").addEventListener("click", (e) => {
   e.currentTarget.disabled = true;
-  await connectGoogle();
-  e.currentTarget.disabled = false;
+  connectGoogle();
 });
 
 /* —— Chip task list —— */

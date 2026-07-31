@@ -64,14 +64,19 @@ The app talks to OpenRouter’s OpenAI-compatible endpoint (`https://openrouter.
 4. Add scope: `https://www.googleapis.com/auth/calendar`
 5. Add your Google account as a **Test user** (required while the app is in Testing)
 
-### 3d. Create a Desktop OAuth client
+### 3d. Create a Web OAuth client
 
 1. Go to **APIs & Services → Credentials**
 2. **Create Credentials → OAuth client ID**
-3. Application type: **Desktop app**
-4. Name it (e.g. `Chrona Desktop`)
-5. Download the JSON file
-6. Save it as:
+3. Application type: **Web application**
+4. Name it (e.g. `Chrona Web`)
+5. Add **Authorized JavaScript origins**:
+   - `http://127.0.0.1:8000`
+   - your public origin (e.g. `https://chrona-autocal.onrender.com`)
+6. Add **Authorized redirect URIs**:
+   - `http://127.0.0.1:8000/api/auth/google/callback`
+   - `https://YOUR-HOST/api/auth/google/callback`
+7. Download the JSON file and save it as:
 
 ```text
 credentials/client_secret.json
@@ -79,14 +84,13 @@ credentials/client_secret.json
 
 The filename can vary when downloaded from Google; rename/move it to exactly `credentials/client_secret.json`.
 
+Set `GOOGLE_REDIRECT_URI` in `.env` to the redirect URI you are using (local or production).
+
 ### 3e. First-time sign-in
 
-Start the app (next section), then either:
+Start the app (next section), then click **Connect Google** in the UI (or open `GET /api/auth/google`).
 
-- Click **Connect Google** in the UI, or
-- Call `POST /api/auth/google`
-
-A browser window opens for Google consent. After approval, a token is saved to `credentials/token.json` (gitignored).
+Your browser is redirected to Google for consent, then back to `/api/auth/google/callback`. After approval, a token is saved to `credentials/token.json` (gitignored).
 
 ## 4. Run the app
 
@@ -150,7 +154,8 @@ TPF/
 |--------|------|-------------|
 | `GET` | `/` | Web UI |
 | `GET` | `/api/health` | Health + auth flag |
-| `POST` | `/api/auth/google` | Run OAuth browser flow |
+| `GET` | `/api/auth/google` | Start Google OAuth (redirect) |
+| `GET` | `/api/auth/google/callback` | OAuth redirect handler |
 | `POST` | `/api/plan` | multipart: task_list, target_day, aesthetic_description?, image?, write_to_calendar |
 | `POST` | `/api/feedback` | JSON accept/reject/edit items |
 | `GET` | `/api/preferences` | Current preference store |
@@ -160,7 +165,7 @@ TPF/
 
 - **`OPENROUTER_API_KEY is not set`** — create `.env` from `.env.example` and paste your OpenRouter key.
 - **`404` / model not found from OpenRouter** — use a full OpenRouter model id like `openai/gpt-4o-mini` (not bare `gpt-4o-mini`).
-- **`Missing Google OAuth client secrets`** — place Desktop client JSON at `credentials/client_secret.json`.
+- **`Missing Google OAuth client secrets`** — place Web client JSON at `credentials/client_secret.json` and set `GOOGLE_REDIRECT_URI` to a registered redirect URI.
 - **`Google Calendar API has not been used...` / `accessNotConfigured`** — in Google Cloud, select project **`chrona-calendar-agent`** (id `180994919519`) and enable **Google Calendar API**:  
   https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=180994919519  
   Wait 1–2 minutes after enabling, then retry. “Google Calendar connected” only means OAuth succeeded; the Calendar API must still be enabled separately.

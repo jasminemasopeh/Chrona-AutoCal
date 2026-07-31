@@ -34,6 +34,10 @@ GOOGLE_TOKEN_PATH = Path(
     os.getenv("GOOGLE_TOKEN_PATH", str(ROOT_DIR / "credentials" / "token.json"))
 )
 GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID", "primary")
+GOOGLE_REDIRECT_URI = os.getenv(
+    "GOOGLE_REDIRECT_URI",
+    "http://127.0.0.1:8000/api/auth/google/callback",
+)
 
 PREFERENCES_PATH = ROOT_DIR / "data" / "preferences.json"
 UPLOADS_DIR = ROOT_DIR / "uploads"
