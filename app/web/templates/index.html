@@ -62,10 +62,10 @@
             <p class="muted tiny">Press Enter to add. Remove with × — if it was scheduled, it is deleted from Google Calendar too.</p>
           </div>
 
-          <label class="check">
-            <input type="checkbox" id="writeToCalendar" checked />
-            <span>Write proposed events to Google Calendar</span>
-          </label>
+          <p class="muted tiny">
+            Plan first, then Accept / Reject / Edit each proposal and click
+            <strong>Put in calendar</strong> to write accepted items.
+          </p>
 
           <div class="actions">
             <button type="button" class="btn ghost" id="connectGoogle">Connect Google</button>
@@ -83,8 +83,10 @@
         <div id="proposals" class="proposals"></div>
 
         <div class="feedback-bar" id="feedbackBar" hidden>
-          <button type="button" class="btn primary" id="submitFeedback">Save feedback</button>
-          <p class="muted tiny">Accept keeps events; reject deletes them; edit updates times and memory.</p>
+          <button type="button" class="btn primary" id="submitFeedback">Put in calendar</button>
+          <p class="muted tiny">
+            Accept / Edit → create (or update) on Google Calendar. Reject → skip (or delete if already written). Preference memory is updated either way.
+          </p>
         </div>
 
         <pre id="trace" class="trace" hidden></pre>

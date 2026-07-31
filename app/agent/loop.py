@@ -188,8 +188,15 @@ def run_scheduling_agent(
         "write_to_calendar": write_to_calendar,
         "instructions": (
             "Automatically detect which calendar each task belongs on and where it fits "
-            "in the day. Create events on the matching calendars. Finish with the required "
-            "JSON proposal object."
+            "in the day. Gym/health/personal tasks go on Personal — never Work. "
+            + (
+                "Create events on the matching calendars, then finish with the required JSON."
+                if write_to_calendar
+                else (
+                    "Do NOT call create_event. Only propose calendar_id, times, and category "
+                    "with event_id null so the user can accept/reject before writing."
+                )
+            )
         ),
     }
     blocked = set() if write_to_calendar else {"create_event"}

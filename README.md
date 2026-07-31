@@ -6,7 +6,7 @@ Built for CIS5930 (LLM Agents) term project — implementation option.
 
 ## Features
 
-1. **Schedule tab** — chip-based task list; agent auto-detects which calendar (Personal/Work/School/…) and free slot each task fits
+1. **Schedule tab** — chip-based task list; agent proposes calendar + slot; you Accept/Reject/Edit then **Put in calendar**
 2. **Preference memory** — local JSON store updated from accept/reject/edit feedback
 3. **Color palettes tab** (optional, separate) — restyle whole calendars from an aesthetic/image plus style prefs (e.g. black text, mobile parity)
 4. **Local web UI** — two tabs; remove a task chip to delete its calendar event too
@@ -113,11 +113,10 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
    - Reply to emails (20m)
    ```
 
-3. Optionally upload a **palette image** and/or type an aesthetic description (e.g. `moss green and soft clay`).
-4. Keep **Write proposed events to Google Calendar** checked and click **Plan schedule**.
-5. Review the proposal and palette. For each slot choose **Accept**, **Reject**, or **Edit**, then **Save feedback**.
-6. Check Google Calendar — events should appear with category-mapped colors.
-7. Run again on another day: preference memory (`data/preferences.json`) should bias future slot choices (e.g. health in the morning).
+3. Click **Plan schedule** — Chrona proposes calendars and times (nothing is written yet).
+4. For each proposal choose **Accept**, **Reject**, or **Edit**, then click **Put in calendar**.
+5. Check Google Calendar — accepted/edited events appear on the matched calendars (Gym → Personal, work tasks → Work, etc.).
+6. Run again on another day: preference memory (`data/preferences.json`) should bias future slot choices.
 
 ## Project layout
 
@@ -157,7 +156,7 @@ TPF/
 | `GET` | `/api/auth/google` | Start Google OAuth (redirect) |
 | `GET` | `/api/auth/google/callback` | OAuth redirect handler |
 | `POST` | `/api/plan` | multipart: task_list, target_day, aesthetic_description?, image?, write_to_calendar |
-| `POST` | `/api/feedback` | JSON accept/reject/edit items |
+| `POST` | `/api/feedback` | Accept/reject/edit → write accepted events + update memory |
 | `GET` | `/api/preferences` | Current preference store |
 | `GET` | `/api/events?day=YYYY-MM-DD` | List events |
 

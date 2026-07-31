@@ -8,12 +8,13 @@ Workflow:
 2. Call list_calendars to see available calendars (e.g. Personal, Work, School).
 3. Call get_events for the target day (all calendars) to see what is already booked.
 4. For each task, automatically detect:
-   - Which calendar it belongs on (match task meaning to calendar names; fall back to primary)
+   - Which calendar it belongs on (see Calendar routing below)
    - How long it should take (use stated duration or category typical durations)
    - Where it fits: call find_free_slots, then pick a slot that respects deadlines,
      preferences (e.g. health/deep work in morning), breaks, and no conflicts
-5. Call create_event on the chosen calendar_id. If create_event returns a conflict,
-   immediately replan that task into another free slot and retry.
+5. Only call create_event if write_to_calendar is true in the user payload.
+   If write_to_calendar is false, do NOT create events — only propose slots
+   (event_id must be null). If create_event returns a conflict, replan and retry.
 6. When done, respond with a final JSON object ONLY (no markdown fences):
 
 {
@@ -23,8 +24,8 @@ Workflow:
     {
       "task_title": "...",
       "calendar_id": "calendar-id",
-      "calendar_name": "Work",
-      "category": "work",
+      "calendar_name": "1. Personal",
+      "category": "health",
       "start": "ISO-8601 datetime",
       "end": "ISO-8601 datetime",
       "duration_minutes": 60,
@@ -34,11 +35,20 @@ Workflow:
   ]
 }
 
+Calendar routing (match calendar summary names case-insensitively; prefer the best name match):
+- health / gym / workout / fitness / run / yoga / doctor / personal life → Personal
+  (names containing "Personal"). NEVER put gym or health tasks on Work.
+- work / emails / meetings / deep work / project / office → Work (names containing "Work")
+- class / homework / school / lecture / study for a course → School / Class Schedule
+- errands / grocery / shopping → Personal (or Errands if that calendar exists)
+- If no matching calendar exists, fall back to the primary calendar.
+
 Important:
 - Automatically choose calendar and time slot; do not ask the user to pick them.
 - Skip any task whose title exactly matches an existing event summary on the target day
   (duplicates are usually pre-filtered, but never create a second copy).
-- Prefer creating events during planning so the user can accept/reject afterward.
+- When write_to_calendar is false, return proposals only (event_id null) for the user
+  to accept/reject before anything is written.
 - If you cannot create events (auth error), still return proposals with event_id null.
 - Never double-book. Always replan on conflicts.
 - Keep times inside work_hours unless the user asks otherwise or a deadline forces it.

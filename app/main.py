@@ -167,7 +167,7 @@ def _as_bool(value: str | bool) -> bool:
 async def plan_schedule(
     task_list: str = Form(...),
     target_day: str = Form(...),
-    write_to_calendar: str = Form("true"),
+    write_to_calendar: str = Form("false"),
 ) -> JSONResponse:
     if not task_list.strip():
         raise HTTPException(status_code=400, detail="task_list is required")
@@ -262,30 +262,56 @@ async def apply_palette(
 
 @app.post("/api/feedback")
 async def submit_feedback(body: FeedbackRequest) -> dict[str, Any]:
+    """Apply accept/reject/edit: write accepted/edited events, drop rejects, update memory."""
     results: list[dict[str, Any]] = []
     for item in body.items:
         calendar_result: dict[str, Any] | None = None
-        if item.action == "reject" and item.event_id:
-            calendar_result = calendar_client.delete_event(
-                item.event_id, calendar_id=item.calendar_id
-            )
-        elif item.action == "edit" and item.event_id and item.final_start and item.final_end:
-            calendar_result = calendar_client.update_event_times(
-                item.event_id,
-                item.final_start,
-                item.final_end,
-                calendar_id=item.calendar_id,
-            )
-        elif item.action == "accept":
-            calendar_result = {"ok": True, "kept": item.event_id}
+        start = item.final_start or item.proposed_start
+        end = item.final_end or item.proposed_end
+
+        if item.action == "reject":
+            if item.event_id:
+                calendar_result = calendar_client.delete_event(
+                    item.event_id, calendar_id=item.calendar_id
+                )
+            else:
+                calendar_result = {"ok": True, "skipped": True, "reason": "not on calendar"}
+        elif item.action in {"accept", "edit"}:
+            if not start or not end:
+                calendar_result = {"ok": False, "error": "Missing start/end times"}
+            elif item.event_id and item.action == "edit":
+                try:
+                    calendar_result = calendar_client.update_event_times(
+                        item.event_id,
+                        start,
+                        end,
+                        calendar_id=item.calendar_id,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    calendar_result = {"ok": False, "error": str(exc)}
+            elif item.event_id and item.action == "accept":
+                calendar_result = {"ok": True, "kept": item.event_id, "event": {"id": item.event_id}}
+            else:
+                # Propose-first flow: create only after the user accepts/edits.
+                try:
+                    calendar_result = calendar_client.create_event(
+                        summary=item.task_title,
+                        start=start,
+                        end=end,
+                        description=f"Chrona · {item.category or 'task'}",
+                        calendar_id=item.calendar_id,
+                        check_conflicts=True,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    calendar_result = {"ok": False, "error": str(exc)}
 
         memory_store.record_feedback(
             item.action,
             item.task_title,
             proposed_start=item.proposed_start,
             proposed_end=item.proposed_end,
-            final_start=item.final_start or item.proposed_start,
-            final_end=item.final_end or item.proposed_end,
+            final_start=start,
+            final_end=end,
             category=item.category,
             reason=item.reason,
         )
@@ -294,6 +320,10 @@ async def submit_feedback(body: FeedbackRequest) -> dict[str, Any]:
                 "task_title": item.task_title,
                 "action": item.action,
                 "calendar": calendar_result,
+                "event_id": (calendar_result or {}).get("event", {}).get("id")
+                or (calendar_result or {}).get("kept")
+                or item.event_id,
+                "calendar_id": item.calendar_id,
             }
         )
 

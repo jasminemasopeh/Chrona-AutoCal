@@ -234,7 +234,8 @@ planForm.addEventListener("submit", async (event) => {
   const formData = new FormData();
   formData.append("task_list", tasks.map((t) => `- ${t.text}`).join("\n"));
   formData.append("target_day", document.getElementById("targetDay").value);
-  formData.append("write_to_calendar", document.getElementById("writeToCalendar").checked ? "true" : "false");
+  // Propose first; writing happens from Put in calendar after accept/reject/edit.
+  formData.append("write_to_calendar", "false");
 
   try {
     const res = await fetch("/api/plan", { method: "POST", body: formData });
@@ -258,9 +259,9 @@ planForm.addEventListener("submit", async (event) => {
     if (skipped.length && !(data.proposals || []).length) {
       showToast(`Skipped existing: ${skipped.join(", ")}`);
     } else if (skipped.length) {
-      showToast(`Scheduled new tasks; skipped existing: ${skipped.join(", ")}`);
+      showToast(`Proposal ready; skipped existing: ${skipped.join(", ")}`);
     } else {
-      showToast(data.ok ? "Proposal ready" : "Agent finished with warnings");
+      showToast(data.ok ? "Proposal ready — review, then Put in calendar" : "Agent finished with warnings");
     }
   } catch (err) {
     summaryText.textContent = err.message || "Something went wrong.";
@@ -297,6 +298,7 @@ submitFeedback.addEventListener("click", async () => {
   });
 
   submitFeedback.disabled = true;
+  submitFeedback.textContent = "Writing…";
   try {
     const res = await fetch("/api/feedback", {
       method: "POST",
@@ -304,12 +306,50 @@ submitFeedback.addEventListener("click", async () => {
       body: JSON.stringify({ items }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Feedback failed");
-    showToast("Feedback saved to preference memory");
+    if (!res.ok) throw new Error(data.detail || "Could not update calendar");
+
+    const results = data.results || [];
+    let written = 0;
+    let rejected = 0;
+    let failed = 0;
+    results.forEach((r, idx) => {
+      const cal = r.calendar || {};
+      if (r.action === "reject") rejected += 1;
+      else if (cal.ok) {
+        written += 1;
+        if (r.event_id && currentProposals[idx]) {
+          currentProposals[idx].event_id = r.event_id;
+          const match = tasks.find(
+            (t) => t.text.toLowerCase() === (r.task_title || "").toLowerCase()
+          );
+          if (match) {
+            match.eventId = r.event_id;
+            match.calendarId = r.calendar_id || match.calendarId;
+          }
+        }
+      } else {
+        failed += 1;
+      }
+    });
+
+    const parts = [];
+    if (written) parts.push(`${written} written`);
+    if (rejected) parts.push(`${rejected} rejected`);
+    if (failed) parts.push(`${failed} failed`);
+    showToast(parts.length ? parts.join(" · ") : "Preference memory updated");
+    if (failed) {
+      const firstErr = results.find((r) => r.calendar && r.calendar.ok === false);
+      if (firstErr?.calendar?.error) {
+        summaryText.textContent = `Some events failed: ${firstErr.calendar.error}`;
+      }
+    } else if (written) {
+      summaryText.textContent = `Saved to Google Calendar (${written} event${written === 1 ? "" : "s"}).`;
+    }
   } catch (err) {
-    showToast(err.message || "Could not save feedback");
+    showToast(err.message || "Could not put events in calendar");
   } finally {
     submitFeedback.disabled = false;
+    submitFeedback.textContent = "Put in calendar";
   }
 });
 
