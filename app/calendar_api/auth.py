@@ -42,20 +42,21 @@ def build_oauth_flow() -> Flow:
     )
 
 
-def authorization_url() -> tuple[str, str]:
-    """Return (Google auth URL, state) for the Connect Google redirect."""
+def authorization_url() -> tuple[str, str, str]:
+    """Return (Google auth URL, state, code_verifier) for the Connect Google redirect."""
     flow = build_oauth_flow()
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
         prompt="consent",
     )
-    return auth_url, state
+    return auth_url, state, flow.code_verifier
 
 
-def exchange_code(code: str) -> Credentials:
+def exchange_code(code: str, code_verifier: str) -> Credentials:
     """Exchange an authorization code for credentials and persist token.json."""
     flow = build_oauth_flow()
+    flow.code_verifier = code_verifier
     flow.fetch_token(code=code)
     creds = flow.credentials
     GOOGLE_TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)

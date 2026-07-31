@@ -72,16 +72,24 @@ async def health() -> dict[str, Any]:
     }
 
 
+def _oauth_cookie_secure(request: Request) -> bool:
+    """Use Secure cookies on HTTPS (e.g. Render); allow plain HTTP locally."""
+    return request.url.scheme == "https" or (
+        request.headers.get("x-forwarded-proto", "").split(",")[0].strip() == "https"
+    )
+
+
 @app.get("/api/auth/google")
-async def auth_google_start() -> RedirectResponse:
+async def auth_google_start(request: Request) -> RedirectResponse:
     """Redirect the browser to Google's OAuth consent screen."""
     try:
-        url, state = authorization_url()
+        url, state, code_verifier = authorization_url()
     except FileNotFoundError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    secure = _oauth_cookie_secure(request)
     response = RedirectResponse(url)
     response.set_cookie(
         key="oauth_state",
@@ -89,6 +97,15 @@ async def auth_google_start() -> RedirectResponse:
         httponly=True,
         max_age=600,
         samesite="lax",
+        secure=secure,
+    )
+    response.set_cookie(
+        key="oauth_code_verifier",
+        value=code_verifier,
+        httponly=True,
+        max_age=600,
+        samesite="lax",
+        secure=secure,
     )
     return response
 
@@ -110,8 +127,12 @@ async def auth_google_callback(
     if not expected_state or not state or state != expected_state:
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
 
+    code_verifier = request.cookies.get("oauth_code_verifier")
+    if not code_verifier:
+        raise HTTPException(status_code=400, detail="Missing code verifier")
+
     try:
-        exchange_code(code)
+        exchange_code(code, code_verifier)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
@@ -119,6 +140,7 @@ async def auth_google_callback(
 
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie("oauth_state")
+    response.delete_cookie("oauth_code_verifier")
     return response
 
 
