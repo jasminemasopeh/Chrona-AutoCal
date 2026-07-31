@@ -1,32 +1,67 @@
 # Chrona — Calendar Scheduling Agent
 
-Python FastAPI app that uses an **OpenAI tool-calling agent** to turn a plain-text task list into a conflict-free Google Calendar schedule, learn preferences from accept/reject/edit feedback, and recolor events from an image or aesthetic description.
+Chrona is an LLM calendar agent that turns a task list into a conflict-free Google Calendar schedule. You review each proposed slot (Accept / Reject / Edit), then click **Put in calendar**. A separate tab can restyle whole calendars from an aesthetic or image.
 
-Built for CIS5930 (LLM Agents) term project — implementation option.
+Built for CIS5930 (LLM Agents).
 
-## Features
+---
 
-1. **Schedule tab** — chip-based task list; agent proposes calendar + slot; you Accept/Reject/Edit then **Put in calendar**
-2. **Preference memory** — local JSON store updated from accept/reject/edit feedback
-3. **Color palettes tab** (optional, separate) — restyle whole calendars from an aesthetic/image plus style prefs (e.g. black text, mobile parity)
-4. **Local web UI** — two tabs; remove a task chip to delete its calendar event too
+## Use online (no install)
 
-## Requirements
+Open the live app:
+
+**[https://chrona-autocal.onrender.com/](https://chrona-autocal.onrender.com/)**
+
+### How to use the website
+
+1. Click **Connect Google** and sign in with the Google account whose calendars you want Chrona to use. Approve calendar access when prompted.
+2. Confirm the status pill shows **Google Calendar connected**.
+3. On **Plan schedule**:
+   - Pick a **target day**.
+   - Add tasks as chips (type a task and press Enter). Examples:
+     - `Gym (45m)`
+     - `Deep work on term project (90m) before 3pm`
+     - `Grocery run (30m)`
+     - `Reply to emails (20m)`
+   - Click **Plan schedule**. Chrona proposes a calendar and time for each task (nothing is written yet).
+4. For each proposal, choose **Accept**, **Reject**, or **Edit** (edit lets you change start/end).
+5. Click **Put in calendar** to write accepted/edited events to Google Calendar. Rejected items are skipped. Preference memory is updated from your choices.
+6. Open [Google Calendar](https://calendar.google.com/) and check the target day (Gym/health → Personal, work-style tasks → Work when those calendars exist).
+
+### Color palettes tab (optional)
+
+1. Switch to **Color palettes**.
+2. Optionally add an aesthetic description, upload an image, and/or style notes (e.g. “keep text black”).
+3. Keep **Apply colors to Google calendars** checked if you want changes saved.
+4. Click **Generate palette**, review the assignments, and confirm in Google Calendar (including mobile — calendar colors sync).
+
+### Notes for online visitors
+
+- The free Render host may sleep when idle; the first load can take ~30–60 seconds.
+- You must complete Google sign-in yourself; Chrona only accesses calendars you authorize.
+- Removing a task chip that was already scheduled also deletes that event from Google Calendar.
+
+---
+
+## Run locally
+
+### Requirements
 
 - Python 3.10+
-- An [OpenRouter API key](https://openrouter.ai/keys) (routes to OpenAI models)
-- A Google Cloud project with the **Google Calendar API** enabled and an **OAuth Desktop** client
+- An [OpenRouter API key](https://openrouter.ai/keys)
+- A Google Cloud project with **Google Calendar API** enabled and a **Web application** OAuth client
 
-## 1. Clone / enter the project
+### 1. Install
 
 ```bash
-cd /home/jasmine/TPF
+git clone https://github.com/jasminemasopeh/Chrona-AutoCal.git
+cd Chrona-AutoCal
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 2. Configure OpenRouter
+### 2. Environment
 
 ```bash
 cp .env.example .env
@@ -38,61 +73,18 @@ Edit `.env`:
 OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_MODEL=openai/gpt-4o-mini
 TIMEZONE=America/New_York
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/api/auth/google/callback
 ```
 
-The app talks to OpenRouter’s OpenAI-compatible endpoint (`https://openrouter.ai/api/v1`) using the official `openai` Python SDK. Model ids must use OpenRouter’s format (e.g. `openai/gpt-4o-mini`).
+### 3. Google OAuth (local)
 
-## 3. Set up Google Calendar OAuth (from scratch)
+1. In [Google Cloud Console](https://console.cloud.google.com/), enable **Google Calendar API**.
+2. Create an **OAuth client ID** → application type **Web application**.
+3. Add authorized redirect URI: `http://127.0.0.1:8000/api/auth/google/callback`
+4. Download the client JSON and save it as `credentials/client_secret.json`.
+5. On the OAuth consent screen, add your Google account as a **Test user** while the app is in Testing.
 
-### 3a. Create a Google Cloud project
-
-1. Open [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (e.g. `chrona-calendar-agent`)
-3. Select that project
-
-### 3b. Enable the Calendar API
-
-1. Go to **APIs & Services → Library**
-2. Search for **Google Calendar API**
-3. Click **Enable**
-
-### 3c. Configure the OAuth consent screen
-
-1. Go to **APIs & Services → OAuth consent screen**
-2. Choose **External** (unless you have a Google Workspace org)
-3. Fill in App name (e.g. `Chrona`), support email, and developer contact
-4. Add scope: `https://www.googleapis.com/auth/calendar`
-5. Add your Google account as a **Test user** (required while the app is in Testing)
-
-### 3d. Create a Web OAuth client
-
-1. Go to **APIs & Services → Credentials**
-2. **Create Credentials → OAuth client ID**
-3. Application type: **Web application**
-4. Name it (e.g. `Chrona Web`)
-5. Add **Authorized JavaScript origins**:
-   - `http://127.0.0.1:8000`
-   - your public origin (e.g. `https://chrona-autocal.onrender.com`)
-6. Add **Authorized redirect URIs**:
-   - `http://127.0.0.1:8000/api/auth/google/callback`
-   - `https://YOUR-HOST/api/auth/google/callback`
-7. Download the JSON file and save it as:
-
-```text
-credentials/client_secret.json
-```
-
-The filename can vary when downloaded from Google; rename/move it to exactly `credentials/client_secret.json`.
-
-Set `GOOGLE_REDIRECT_URI` in `.env` to the redirect URI you are using (local or production).
-
-### 3e. First-time sign-in
-
-Start the app (next section), then click **Connect Google** in the UI (or open `GET /api/auth/google`).
-
-Your browser is redirected to Google for consent, then back to `/api/auth/google/callback`. After approval, a token is saved to `credentials/token.json` (gitignored).
-
-## 4. Run the app
+### 4. Start the app
 
 ```bash
 source .venv/bin/activate
@@ -101,86 +93,17 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Demo walkthrough
+Then follow the same steps as **Use online**: Connect Google → add tasks → Plan schedule → Accept/Reject/Edit → **Put in calendar**.
 
-1. **Connect Google** (once).
-2. Enter a **target day** and a task list, for example:
+### Local troubleshooting
 
-   ```text
-   - Deep work on term project (90m) before 3pm
-   - Gym (45m)
-   - Grocery run (30m)
-   - Reply to emails (20m)
-   ```
+- **`OPENROUTER_API_KEY is not set`** — copy `.env.example` to `.env` and paste your key.
+- **`Missing Google OAuth client secrets`** — place the Web client JSON at `credentials/client_secret.json`.
+- **`404` / model not found** — use a full OpenRouter model id, e.g. `openai/gpt-4o-mini`.
+- **No free slots** — pick a less busy day or widen `work_hours` in `data/preferences.json`.
 
-3. Click **Plan schedule** — Chrona proposes calendars and times (nothing is written yet).
-4. For each proposal choose **Accept**, **Reject**, or **Edit**, then click **Put in calendar**.
-5. Check Google Calendar — accepted/edited events appear on the matched calendars (Gym → Personal, work tasks → Work, etc.).
-6. Run again on another day: preference memory (`data/preferences.json`) should bias future slot choices.
-
-## Project layout
-
-```text
-TPF/
-  app/
-    main.py              # FastAPI routes + UI
-    config.py            # env / paths
-    agent/               # OpenAI tool-calling loop
-    calendar_api/        # OAuth + Calendar tools
-    memory/              # preferences.json helpers
-    palette/             # image → palette → colorId
-    web/                 # templates + static assets
-  data/preferences.json  # local preference memory
-  credentials/           # client_secret.json + token.json (local only)
-  requirements.txt
-  .env.example
-```
-
-## Agent tools
-
-| Tool | Purpose |
-|------|---------|
-| `get_preferences` | Read local scheduling memory |
-| `update_preferences` | Merge preference updates |
-| `get_events` | List events for a day |
-| `find_free_slots` | Free windows + candidate slots inside work hours |
-| `create_event` | Create event; returns conflict details for replanning |
-| `update_event_color` | Patch Google `colorId` (1–11) |
-
-## API cheat sheet
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/` | Web UI |
-| `GET` | `/api/health` | Health + auth flag |
-| `GET` | `/api/auth/google` | Start Google OAuth (redirect) |
-| `GET` | `/api/auth/google/callback` | OAuth redirect handler |
-| `POST` | `/api/plan` | multipart: task_list, target_day, aesthetic_description?, image?, write_to_calendar |
-| `POST` | `/api/feedback` | Accept/reject/edit → write accepted events + update memory |
-| `GET` | `/api/preferences` | Current preference store |
-| `GET` | `/api/events?day=YYYY-MM-DD` | List events |
-
-## Troubleshooting
-
-- **`OPENROUTER_API_KEY is not set`** — create `.env` from `.env.example` and paste your OpenRouter key.
-- **`404` / model not found from OpenRouter** — use a full OpenRouter model id like `openai/gpt-4o-mini` (not bare `gpt-4o-mini`).
-- **`Missing Google OAuth client secrets`** — place Web client JSON at `credentials/client_secret.json` and set `GOOGLE_REDIRECT_URI` to a registered redirect URI.
-- **`Google Calendar API has not been used...` / `accessNotConfigured`** — in Google Cloud, select project **`chrona-calendar-agent`** (id `180994919519`) and enable **Google Calendar API**:  
-  https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=180994919519  
-  Wait 1–2 minutes after enabling, then retry. “Google Calendar connected” only means OAuth succeeded; the Calendar API must still be enabled separately.
-- **No free slots** — widen work hours in `data/preferences.json` or pick a less busy day.
-- **Colors look wrong** — Google only supports fixed event colors (1–11); the app maps your palette to the nearest of those.
-
-## Evaluation notes (course)
-
-This project demonstrates:
-
-- A real **tool-using agent loop** (not a single prompt)
-- **Conflict detection + replanning** via tool return values
-- **Persistent preference memory** updated from user feedback
-- **Multimodal-ish personalization** (image palette → calendar styling)
+---
 
 ## License
 
 Course / academic use.
-# Chrona-AutoCal
