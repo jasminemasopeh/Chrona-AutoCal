@@ -218,10 +218,9 @@ def _busy_intervals(day: str) -> list[tuple[datetime, datetime]]:
         end_s = ev.get("end")
         if not start_s or not end_s:
             continue
-        # All-day events: treat as full day busy for free-slot finding
-        if "T" not in start_s:
-            day_start, day_end = _day_bounds(day)
-            busy.append((day_start, day_end))
+        # Date-only all-day events (holidays, pay days, etc.) should not block
+        # timed scheduling — Google Calendar still allows timed events that day.
+        if "T" not in str(start_s):
             continue
         start_dt = datetime.fromisoformat(start_s).astimezone(tz)
         end_dt = datetime.fromisoformat(end_s).astimezone(tz)
